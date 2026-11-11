@@ -438,3 +438,71 @@ footer {
     color: var(--primary-dark);
     text-decoration: underline;
 }
+
+
+
+/* =========================================
+   SECTION FORMATION
+========================================= */
+
+.formation-container {
+    margin-top: 30px;
+    max-width: 850px;
+}
+
+.formation-card {
+    background-color: var(--white);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--primary);
+
+    border-radius: 8px;
+    padding: 30px;
+
+    box-shadow: 0 5px 20px rgba(31, 55, 79, 0.04);
+}
+
+.formation-date {
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 12px;
+}
+
+.formation-card h3 {
+    font-size: 22px;
+    color: var(--primary-dark);
+    margin-bottom: 5px;
+}
+
+.formation-card h4 {
+    color: var(--text-light);
+    font-size: 15px;
+    margin-bottom: 20px;
+}
+
+.formation-card p {
+    color: var(--text-light);
+    margin-bottom: 12px;
+}
+
+.formation-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.formation-tags span {
+    background-color: #edf3f8;
+    color: var(--primary-dark);
+
+    padding: 6px 12px;
+    border-radius: 5px;
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+
+
+
