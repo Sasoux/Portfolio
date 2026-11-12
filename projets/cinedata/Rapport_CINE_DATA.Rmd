@@ -1,0 +1,1428 @@
+---
+title: |
+  \textbf{Rapport de groupe des UE} 
+  \\\textbf{Bases de données} 
+  \\\textbf{Sciences des Données 2}
+author:
+- "\\textit{BERRANDOU FATIMA,}"
+- "\\textit{HO EMMY,}"
+- "\\textit{JEBBAR SAFAE \\&}"
+- "\\textit{LEONE ESTHER }"
+date: "`r format(Sys.Date(), '%d %B %Y')`"
+output:
+  pdf_document:
+    fig_caption: yes
+    keep_md: yes
+    keep_tex: yes
+    md_extensions: +raw_attribute
+    number_sections: yes
+    pandoc_args:
+    - --top-level-division="chapter"
+    - --bibliography="references.bib"
+    template: template.tex
+    toc: yes
+    toc_depth: 1
+  html_document:
+    
+    
+    df_print: paged
+    toc: yes
+    toc_depth: '2'
+  word_document:
+    fig_caption: yes
+    number_sections: yes
+    pandoc_args: 
+    - --top-level-division="chapter"
+    - --to="odt+native_numbering"
+    toc: yes
+    toc_depth: '2'
+toc-title: "Table des matières"
+bibliography: references.bib
+coursecode: TV15MI-TV25MI
+csl: iso690-author-date-fr-no-abstract.csl
+Acknowledgements: 
+- Nous remercions Madame Sandra Bringay et Madame Marine Demangeot pour leur encadrement, leur disponibilité et la qualité de leurs conseils, qui ont largement contribué à l’avancement et à la réussite de ce projet. 
+- Nous adressons également nos remerciements à l’ensemble de l’équipe du groupe pour son engagement et sa collaboration. Chaque membre a contribué par ses idées et son implication, en faisant preuve de sérieux et de rigueur dans la réalisation de nos objectifs communs. 
+biblio-style: elsarticle-harv
+session: 2026
+team: CINÉ DATA
+groupeTD : TD2
+Abstract: 
+- Ce rapport présente une analyse croisée de l'industrie cinématographique, alliant performance économique mondiale et régulation administrative française. À travers la fusion d'un jeu de données synthétique (Kaggle) et des registres officiels du CNC (visas d'exploitation), l'étude examine comment des facteurs tels que la classification d'âge, l'origine géographique et la réception critique influencent le succès financier d'une œuvre. 
+- Après une phase de nettoyage et de modélisation SQL sur plus de 2 000 films, nos analyses révèlent que si une audience large (visa "Tout public") favorise mécaniquement les recettes, le succès reste une variable complexe. La corrélation entre les notes des spectateurs et le box-office, bien que réelle, montre que la qualité perçue n'est qu'un moteur parmi d'autres, laissant une place prépondérante aux stratégies de marketing et à la notoriété des studios.
+always_allow_html: true
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction {.label:s-intro}
+
+## Introduction
+
+L’industrie cinématographique est un secteur complexe où se croisent des enjeux artistiques, culturels et financiers. Chaque année, des milliers de films sont produits à travers le monde, mais seuls quelques-uns parviennent à dominer le Box-Office mondial ou à franchir les frontières pour s’exporter durablement. Comprendre les facteurs qui déterminent le succès d’un film constitue donc un enjeu majeur pour les acteurs du secteur.  
+
+Le présent rapport s’appuie sur l’analyse croisée de deux sources de données complémentaires. La première, issue de Kaggle, fournit une vision globale et quantitative de l'industrie : elle regroupe des informations détaillées sur le budget de production, les performances commerciales et la réception critique du public. La seconde source, provenant de data.gouv.fr, recense les visas d'exploitation délivrés par le Centre National du Cinéma (CNC) depuis 1945, offrant un éclairage spécifique sur le marché français. Le croisement entre ces données permet d’étudier le lien entre succès commercial et accès au marché français.  
+
+L’objectif de cette étude est d’identifier les facteurs influençant la performance d’un film et son obtention d’un visa d’exploitation en France, afin de mieux comprendre les mécanismes de réussite et de diffusion dans un contexte international et réglementé.
+\bigskip
+
+\begin{center}
+
+\textbf{Existe-t-il une relation entre les caractéristiques d’un film (budget, réalisateur, pays d’origine, critiques) et son succès commercial mondial ainsi que son autorisation d’exploitation en France ?}
+
+\end{center}
+\medskip
+
+\justifying
+
+## Responsabilités et composition de l’équipe
+
+\medskip
+
+BERRANDOU Fatima : Étudiante n°22401845  
+
+Resp. MOD, Coresp. Requête SQL,
+Coresp. Rapport
+
+HO Emmy : Étudiante n°22209880   
+
+Resp. MCD, Coresp. Requête SQL, Coresp.
+Rapport
+
+JEBBAR Safae : Étudiante n°22304332  
+
+Resp. Collecte de données, Coresp.
+Requête SQL, Coresp. Rapport, Resp. Rapport rmd
+
+LEONE Esther : Étudiante n°22313119. 
+Resp Nettoyage de données, Coresp.
+Rapport, Coresp. Requête SQL
+
+# Base de données provenance et caractérisation
+
+La qualité d'une analyse de données repose avant tout sur la fiabilité
+et la pertinence des sources sélectionnées. Pour ce projet, nous avons
+croisé un jeu de données international avec un registre administratif
+français.
+
+## Description des sources
+
+### [Synthetic Movie Dataset (Kaggle)](https://www.kaggle.com/datasets/mjshubham21/movie-dataset-for-analytics-and-visualization)
+
+Le jeu de données a été récupéré sur la plateforme Kaggle. Il s'agit
+d'un fichier au format `.csv`(17 colonnes pour \> 500 000 lignes). Il
+contient des données technico-économiques (budget, box-office) et
+sociales.
+
+### [Liste des visas d’exploitation cinématographique (Data.gouv.fr)](https://www.data.gouv.fr/datasets/liste-des-visas-dexploitations-cinematographiques-delivres-de-1945-a-2025)
+
+Le jeu de données a été récupéré sur le portail officiel des données
+publiques françaises. Il s'agit d'un fichier `.csv`(8 colonnes),
+recensant les films depuis 1945 et contenant notamment des numéro de
+visa, décision de classification et date de délivrance.
+
+## Sélection et Nettoyage (*Data Cleaning*)
+
+Afin de garantir la cohérence de notre base de données, nous avons
+effectué des choix de filtrage stricts :
+
+Le dataset Kaggle a été réduit de 17 à 8 colonnes, en éliminant les
+données textuelles et visuelles pour se concentrer exclusivement sur le
+**Budget**, les **Recettes**, les **Notes** et le **Réalisateur**.
+Parallèlement, le dataset Visas a été traité en privilégiant le **Numéro
+de visa** comme clé primaire et la **Décision administrative**.
+L'analyse a été restreinte aux films sortis entre **2000 et 2024** afin
+de permettre une comparaison pertinente des budgets face à l'inflation
+et d'assurer la représentativité des critiques numériques. Enfin on a
+exclus les lignes présentant un budget de "0" ou des recettes
+manquantes, pour garantir l'intégrité des calculs de rentabilité.
+
+## Choix de la structure de stockage
+
+Bien que les données sources soient en `.csv`, nous avons choisi de les
+importer dans un **SGBD Relationnel (SQL via phpMyAdmin)** pour forcer
+les liens entre un film et son visa (Clé Étrangère) évite les erreurs de
+saisie. Ainsi qu'une création de tables dédiées (**REALISATEUR** et
+**PAYS**) pour éviter la redondance (Normalisation). Au lieu de répéter
+un nom 50 fois, nous utilisons un identifiant unique. Et enfin le SQL
+permet des jointures complexes pour comparer instantanément les revenus
+mondiaux avec les régulations françaises.
+
+Finalement, définir clairement quelle est la
+\textbf{population étudiée}.
+
+# Traitement des données
+
+## Présentation générale
+
+Cette base de données cinématographique a été constituée à partir de la
+fusion des deux sources distinctes présentées précédemment.
+
+L'appariement entre les deux sources a été réalisé via le **titre en
+anglais** des films (`Titre_EN` côté CNC, `Title_EN_corrected` côté
+box-office). Seuls les films présents dans les deux bases ont été
+conservés (jointure interne). Les doublons ont été traités en
+privilégiant la ligne la plus complète.
+
+La base finale est organisée en **deux fichiers CSV** normalisés,
+décrits ci-dessous.
+
+## Sources utilisées
+
+| Source | Période | Lignes | Description |
+|------------------|------------------|------------------|-------------------|
+| Visas CNC | 1945–2025 | \~95 700 | Données réglementaires et administratives françaises |
+| Box-office international | 2000–2024 | 5 000 | Recettes, notes et métadonnées de films anglophones |
+
+## Étapes de traitement
+
+**1. Chargement et normalisation** Les titres anglais des deux sources
+ont été normalisés (suppression des espaces, mise en minuscules) pour
+permettre la correspondance.
+
+**2. Déduplication** Les deux sources contenaient des doublons sur les
+titres. En cas de titre en double, la ligne conservée est celle
+présentant le plus grand nombre de champs renseignés (côté CNC) ou le
+plus grand nombre de votes (côté box-office).
+
+Les deux étapes précédentes ont pu être réalisé à l'aide de l'ia nous permettant d'accélérer cette phase et se concentre sur l'étape suivante.
+
+**3. Nettoyage** La colonne `Format` du fichier CNC présentait des
+valeurs aberrantes (longues chaînes de noms de sociétés de production
+dues à des erreurs de saisie). Ces valeurs ont été remplacées par des
+valeurs manquantes. Les entrées "Non renseigné" et les artefacts
+numériques ont été exclus des tables de référence.
+
+**4. Fusion et construction des tables** Les trois tables (`FILM`,
+`RÉALISATEUR`, `PAYS`) ont été construites depuis le jeu de données
+fusionné (2 249 films appariés).
+
+# Description des tables
+
+## Tables
+
+\begin{center}
+Table 1 : Film (2 249 x 12)
+\end{center}
+
+| Colonne | Type | Description | Caractéristique |
+|----------------|----------------|--------------------|--------------------|
+| `id_film` | `integer` | Identifiant unique du film | clé primaire de la table film |
+| `titre` | `character` | Titre du film en anglais | unique et pas de valeurs manquantes |
+| `année_sortie` | `numeric` | Année de sortie (source : CNC) | pas de valeurs manquantes |
+| `langue_ originale` | `character` | Code ISO 639-1 de la langue originale | en, fr, es |
+| `format` | `character` | Format du film | Long métrage, Court-métrage, Moyen-métrage |
+| `décision` | `character` | Décision de visa CNC | Tout public, Interdit -12ans,-16ans,-18ans, Avertissement |
+| `localisation_ dossier` | `character` | Lieu d'archivage du dossier | CNC, Archives nationales |
+| `recettes_ mondiales` | `numeric` | Recettes mondiales totales en USD | pas de valeurs manquantes |
+| `recettes_ domestiques` | `numeric` | Recettes sur le marché nord-américain en USD | pas de valeurs manquantes |
+| `recettes_ étrangères` | `numeric` | Recettes sur les marchés internationaux en USD | pas de valeurs manquantes |
+| `note_moyenne` | `numeric` | Note moyenne sur 10 (source : box-office) | Compris entre 1 et 10 |
+| `nb_notes` | `numeric` | Nombre de votes ayant contribué à la note | pas de valeurs manquantes |
+
+Relation avec les autres tabes
+
+-   `id_réal` → clé étrangère vers `RÉALISATEUR.id_réal`.
+-   `id_pays` → clé étrangère vers `PAYS.id_pays`.
+
+\begin{center}
+Table 2 : Réalisateur (1 449 x 2)
+\end{center}
+
+| Colonne | Type | Description | Caractéristique |
+|----------------|----------------|--------------------|--------------------|
+| `id_réal` | `integer` | Identifiant unique du réalisateur | clé primaire de la table réalisateur |
+| `réalisateur` | `character` | Nom complet du réalisateur | format variable selon saisie source |
+
+Relation avec les autres tabes
+
+-   Lié à `FILM` via une clé étrangère `id_réal` (relation **1:N** — un
+    réalisateur peut avoir réalisé plusieurs films).
+
+
+\begin{center}
+Table 3 : Pays (131 x 2)
+\end{center}
+
+| Colonne | Type | Description | Caractéristique |
+|----------------|----------------|--------------------|--------------------|
+| `id_pays` | `integer` | Identifiant unique de l'entrée pays | clé primaire de la table pays |
+| `nom_pays` | `character` | Nom du pays ou nationalités |  |
+
+Relation avec les autres tabes 
+- Lié à `FILM` via une clé étrangère
+`id_pays` (relation **1:N** — une nationalité peut être partagée par
+plusieurs films).
+
+## Schéma relationnel
+
+```         
+REALISATEUR            FILM                       PAYS
+---------------   ----------------------   ---------------
+id_real  (PK) --> id_film       (PK)   <-- id_pays  (PK)
+realisateur       id_real  (FK) ----->    nom_pays
+                  id_pays  (FK) ----->
+                  titre
+                  annee_sortie
+                  langue_originale
+                  format
+                  decision
+                  localisation_dossier
+                  recettes_mondiales
+                  recettes_domestiques
+                  recettes_etrangeres
+                  note_moyenne
+                  nb_notes
+```
+
+> Les clés étrangères `id_réal` et `id_pays` sont à implémenter dans
+> `FILM` lors de l'intégration en base de données.
+
+# Modélisation Conceptuelle (MCD) et Stratégie de Corrélation
+
+
+```{r, echo=FALSE, fig.align='center', out.width='100%', fig.cap="Modèle Conceptuel de Données"}
+
+library(DiagrammeR)
+
+grViz("
+digraph MCD {
+
+  graph [layout = dot, rankdir = TB]
+
+  node [style = filled]
+
+  # ENTITÉS
+  Film [label = <
+    <b><font point-size='16'>FILM</font></b><br/>
+    <u><b>id_film</b></u><br/>
+    titre<br/>
+    annee_sortie<br/>
+    langue_originale<br/>
+    format<br/>
+    num_visa<br/>
+    decision<br/>
+    localisation_dossier<br/>
+    recettes_mondiales<br/>
+    recettes_domestiques<br/>
+    recettes_etranger<br/>
+    note_moyenne<br/>
+    nb_votes
+  >, shape = box, fillcolor = lightblue]
+
+  Realisateur [label = <
+    <b><font point-size='14'>REALISATEUR</font></b><br/>
+    <u><b>id_real</b></u><br/>
+    nom_real
+  >, shape = box, fillcolor = lightblue]
+
+  Pays [label = <
+    <b><font point-size='14'>PAYS</font></b><br/>
+    <u><b>code_pays</b></u><br/>
+    nom_pays
+  >, shape = box, fillcolor = lightblue]
+
+  # ASSOCIATIONS
+  Realiser [label = <
+    <b><font point-size='13'>REALISER</font></b>
+  >, shape = ellipse, fillcolor = violetred3]
+
+  Produire [label = <
+    <b><font point-size='13'>PRODUIRE</font></b>
+  >, shape = ellipse, fillcolor = violetred3]
+
+  #  POSITIONNEMENT
+  {rank = min; Film}                        
+  {rank = same; Realiser; Produire}          
+  {rank = same; Realisateur; Pays}          
+
+  # RELATIONS
+  Film -> Realiser [label = '1,N']
+  Realiser -> Realisateur [label = '1,N']
+
+  Film -> Produire [label = '1,N']
+  Produire -> Pays [label = '0,N']
+
+}
+")
+
+```
+
+
+## Mécanisme de corrélation entre les jeux de données
+
+Le défi majeur de ce projet réside dans l'absence d'un identifiant
+commun universel (comme un code ISAN) entre le dataset Kaggle et le
+registre du CNC. Pour construire notre entité unique FILM, la
+corrélation s'est appuyée sur :
+
+L'appariement par clés composites (Fuzzy Matching) : Le croisement des
+sources s'effectue par une association combinée entre le Titre du film
+et l' Année de sortie. Cette double vérification permet de garantir l'intégrité des données et éviter les collisions liées aux remakes (films différents portant le même titre à des époques distinctes).
+
+La gestion de l'exhaustivité (Jointure à gauche) : Bien que les données
+soient désormais consolidées dans une structure unique, nous avons
+respecté la logique de cardinalité (0,1) lors de la fusion. Cela
+signifie que chaque entrée de notre table possède systématiquement des
+attributs économiques (Kaggle), mais peut présenter des valeurs nulles
+(NA) pour les attributs administratifs (Visa/CNC). Cette distinction permet d'isoler et d'analyser statistiquement le profil des films qui ne sont pas
+distribués sur le territoire français.
+
+## Objectifs de l'analyse via ce modèle
+
+Grâce à cette structure de données unifiée, nous sommes en mesure
+d'interroger notre base pour répondre à nos hypothèses de recherche de
+manière transversale :
+
+1.  Existe-t-il une corrélation entre l'investissement (budget) et la capacité d'un film à s'exporter sur le marché français ? Nous chercherons à déterminer s'il existe un seuil budgétaire favorisant systématiquement
+    l'obtention d'un visa et le succès au box-office mondial.
+
+2.  Une réception critique négative (basse note moyenne ou faible nombre de votes) est-elle statistiquement liée à des décisions administratives restrictives en France (type de classification du visa) ? Ce modèle permet de croiser instantanément la "qualité perçue" avec le cadre réglementaire du CNC.
+
+3.  En analysant la variable langue_originale et le format de production, nous pourrons déterminer si l'origine culturelle d'une œuvre influence davantage son succès commercial et sa diffusion internationale que le montant du budget alloué.
+
+Cette structure "plate" facilite l'application de modèles de régression
+et de tests de corrélation sous R, permettant de transformer ces
+colonnes de données en indicateurs stratégiques pour répondre à notre
+problématique initiale.
+
+# Modèle Relationnel (MOD) et Implémentation Technique
+
+```{r, echo=FALSE, fig.cap="Aperçu des Concepteurs", fig.align='center', out.width='100%'}
+
+knitr::include_graphics("SQL_concepteur.png")
+```
+## Processus d'implémentation : de RStudio vers SQL
+
+La construction de cette base de données a nécessité un flux de travail
+(*pipeline*) rigoureux :
+
+1.  Nous avons utilisé R pour nettoyer les fichiers CSV (gestion des valeurs manquantes, formatage et correction des encodages). R a également permis de générer des identifiants uniques pour assurer l'intégrité référentielle.
+2.  À partir du MOD, nous avons rédigé les requêtes `CREATE TABLE` en définissant les types de
+    données (`INT`, `VARCHAR`, `DECIMAL`) et les contraintes de clés.
+3.  **Importation des données** : Les données nettoyées ont été
+    exportées en fichiers CSV "propres", puis injectées dans le SGBD via
+    des scripts d'insertion.
+
+
+
+## Potentiel analytique de la base SQL
+
+Une fois la base de données finalisée, elle permet de réaliser des
+analyses complexes que des fichiers plats ne pourraient pas supporter :
+
+-   **Requêtes de croisement (Jointures)** : Grâce aux `JOIN`, nous
+    pouvons lier le budget d'un film américain à sa décision de visa en
+    France.
+-   **Agrégations statistiques** : Calcul de métriques par groupe (ex:
+    "budget moyen par type de visa").
+-   **Filtrage multicritères** : Identification de profils précis (ex:
+    films à petit budget avec de hautes notes critiques et un visa "Tout
+    public").
+
+Cette structure SQL constitue le moteur de notre recherche et nous
+permet de transformer des données brutes en indicateurs stratégiques.
+
+## Aperçu de l'implémentation dans phpMyAdmin
+
+Pour valider notre structure, nous avons implémenté le schéma sous
+phpMyAdmin. La capture d'écran ci-dessous montre la structure finale de la table FILM. 
+
+```{r, echo=FALSE, fig.cap="Schéma de la base de données SQL", fig.align='center', out.width='100%'}
+
+knitr::include_graphics("SQL_1.png")
+
+```
+
+
+
+# Analyses et Requêtes SQL
+
+Ce chapitre présente les différentes requêtes SQL permettant d'extraire
+des indicateurs clés de notre base de données consolidée. Chaque requête
+est conçue pour répondre à un aspect précis de notre problématique. Pour cela, nous avons fait le choix d'interfaçer RStudio avec un environnement SQL (via MAMP).
+
+### Protocole de connexion
+La connexion entre l'environnement de rédaction (RMarkdown) et le serveur de données (MySQL) est établie via un pilote de communication (driver). Nous utilisons le chemin d'accès local (Socket) fourni par MAMP pour garantir une liaison directe et sécurisée.
+
+Note technique : Une fois la connexion con établie, chaque bloc SQL est exécuté directement sur le serveur, et les résultats sont instantanément convertis en "Data Frames" exploitables par R pour la phase suivante de visualisation.
+
+```{r}
+# install.packages("RMySQL")
+# install.packages("DBI")
+
+library(DBI)
+con <- DBI::dbConnect(
+  drv = RMySQL::MySQL(),  
+  host = "localhost", 
+  port = 8889, 
+  username = "root", 
+  password = "root", 
+  dbname = "CINEDATA" ,   
+  unix.sock = "/Applications/MAMP/tmp/mysql/mysql.sock"
+)
+```
+
+## Requêtes réalisées
+
+Les requêtes suivantes sont organisées en quatre grandes thématiques,
+progressant du descriptif vers l'analytique, afin de répondre pas à pas
+à notre problématique.
+
+------------------------------------------------------------------------
+
+### Statistiques sur la production française
+
+#### Requête 1 — Nombre de films par année de sortie en France
+Visualiser l'évolution du volume de films distribués en France au fil du temps, à partir des visas d'exploitation délivrés par
+le CNC.
+Un simple `COUNT(*)` groupé par année de sortie, trié
+chronologiquement en ordre décroissant.
+
+```{sql, connection = con, eval = FALSE}
+SELECT année_sortie,
+       COUNT(*) AS nb_films
+FROM film
+GROUP BY année_sortie
+ORDER BY année_sortie DESC;
+```
+
+Le résultat attendu est un tableau listant chaque année et le nombre de
+films correspondants. On s'attend à observer une progression générale
+sur les décennies récentes, avec d'éventuels creux liés aux contextes
+économiques ou sanitaires (ex. 2020).
+
+------------------------------------------------------------------------
+
+#### Requête 2 — Top 10 des réalisateurs les plus prolifiques en France
+
+Identifier les réalisateurs dont les œuvres sont les plus
+représentées dans la base CNC, ce qui peut indiquer une forte présence
+sur le marché français.
+La Jointure entre `FILM` et `REALISATEUR` via la clé
+étrangère `id_real`, regroupement par réalisateur, puis tri décroissant
+sur le nombre de films. Les entrées `Non renseigné` sont exclues pour ne
+pas biaiser le classement.
+
+```{sql, connection = con, eval = FALSE}
+SELECT r.nom_real        AS realisateur,
+       COUNT(*)          AS nb_films_realises
+FROM FILM f
+RIGHT JOIN REALISATEUR r ON f.réalisateur = r.nom_real
+WHERE r.nom_real != 'Non renseigné'
+GROUP BY r.nom_real
+ORDER BY nb_films_realises DESC
+LIMIT 10;
+```
+
+Le résultat attendu est un classement des dix réalisateurs les plus
+actifs sur le marché français.
+
+------------------------------------------------------------------------
+
+#### Requête 3 — Proportion de courts-métrages vs longs-métrages
+
+Connaître la répartition des formats dans la base afin de
+mieux cibler les analyses (le box-office international ne concernant
+principalement que les longs-métrages).
+Le regroupement se fait par la colonne `format` et le comptage.
+
+```{sql, connection = con}
+SELECT format,
+       COUNT(*) AS total
+FROM film
+GROUP BY format
+ORDER BY total DESC;
+```
+
+Le résultat attendu est que la grande majorité des entrées devrait
+correspondre à des longs-métrages. Ce résultat justifie de concentrer
+les analyses statistiques sur ce format.
+
+------------------------------------------------------------------------
+
+### Analyse des restrictions (Visas CNC)
+
+#### Requête 4 — Films interdits aux moins de 18 ans depuis 2000
+
+Lister les films ayant reçu une décision restrictive
+(`Interdit -18 ans`) depuis 2000, en incluant le nom du réalisateur.
+On fait une jointure entre `FILM` et `REALISATEUR`. Le filtre
+`LIKE '%-18%'` sur la colonne `decision` permet de cibler toutes les
+variantes de la mention d'interdiction aux mineurs de 18 ans. Le filtre
+sur `annee_sortie` restreint la période d'analyse.
+
+```{sql, connection = con}
+SELECT f.titre,
+       r.nom_real           AS realisateur,
+       f.année_sortie,
+       f.décision
+FROM FILM f
+LEFT JOIN REALISATEUR r ON f.réalisateur = r.nom_real
+WHERE f.décision   LIKE '%-18%'
+  AND f.année_sortie >= 2000
+ORDER BY f.année_sortie DESC;
+```
+
+Le résultat attendu est une liste de films classés 18+ avec leur
+réalisateur et leur année de sortie. Ce résultat permettra d'analyser si
+ces films correspondent à des profils de box-office particuliers.
+
+------------------------------------------------------------------------
+
+#### Requête 5 — Évolution des films « Tout public » par décennie
+
+Observer si la proportion de films accessibles à tous les
+publics a évolué au fil des décennies.
+La décennie est calculée en divisant l'année de sortie par
+10 (division entière) puis en remultipliant par 10. Le filtre porte sur
+la valeur exacte `'Tout public'` dans la colonne `decision`.
+
+```{sql, connection = con}
+SELECT 
+    FLOOR(CAST(année_sortie AS UNSIGNED) / 10) * 10 AS decennie,
+    COUNT(*) AS nb_films_tout_public
+FROM film
+WHERE décision = 'Tout public'
+  AND année_sortie IS NOT NULL
+GROUP BY decennie
+ORDER BY decennie ASC;
+```
+Le résultat attendu est un tableau décennal montrant le nombre absolu
+de films « Tout public ». Combiné à la requête 1 (total par année), il
+permettrait de calculer la part relative et d'évaluer une éventuelle
+libéralisation ou restriction des classifications au fil du temps.
+
+------------------------------------------------------------------------
+
+### Analyse du Box-Office Mondial (2000–2024)
+
+#### Requête 6 — Top 5 des films aux revenus mondiaux les plus élevés
+Identifier les films les plus rentables de la base, avec
+le nom de leur réalisateur, afin d'évaluer si les grands succès
+commerciaux sont associés à des réalisateurs récurrents.
+On fait une jointure entre `FILM` et `REALISATEUR`, tri décroissant
+sur `recettes_mondiales`, limitation à 5 résultats.
+
+```{sql, connection = con}
+SELECT f.titre,
+       f.recette_mondiale,
+       r.nom_real AS nom_realisateur
+FROM FILM f
+LEFT JOIN REALISATEUR r ON f.réalisateur = r.nom_real
+ORDER BY f.recette_mondiale DESC
+LIMIT 5;
+```
+
+Le résultat attendu est les cinq films générant les recettes mondiales
+les plus élevées de la base. On s'attend à retrouver des blockbusters
+américains, ce qui permettra de
+vérifier si ces films sont systématiquement présents dans la base CNC
+avec un visa délivré.
+
+------------------------------------------------------------------------
+
+#### Requête 7 — Moyenne des revenus mondiaux par titre et langue originale
+
+Comparer les recettes moyennes selon la langue originale
+du film pour évaluer si les productions anglophones dominent
+structurellement le box-office.
+On fait une agrégation `AVG()` sur les recettes mondiales, groupée par
+`titre` et `langue_originale`, triée en ordre décroissant.
+
+```{sql, connection = con}
+SELECT titre,
+       langue_original,
+       AVG(recette_mondiale) AS moyenne_recettes_mondiales
+FROM film
+GROUP BY titre, langue_original
+ORDER BY moyenne_recettes_mondiales DESC;
+```
+Le résultat attendu est les films en anglais (`en`) devraient afficher
+les moyennes les plus élevées, témoignant de la domination commerciale
+des productions hollywoodiennes sur le marché mondial.
+
+------------------------------------------------------------------------
+
+#### Requête 8 — Films avec une note supérieure à 8/10 et plus de 5 000 votes
+
+Isoler les films à la fois populaires (grand nombre de
+votes) et bien évalués (note \>= 8/10), ce qui correspond à des œuvres
+consensuellement reconnues par le public.
+On utilise un filtre combiné sur `note_moyenne` (\>= 8.0) et `nb_votes`
+(\> 5 000). Ces deux conditions permettent d'écarter les films
+confidentiels dont la haute note s'expliquerait par un faible
+échantillon de votants.
+
+```{sql, connection = con}
+SELECT titre,
+       note_moyenne,
+       nb_note
+FROM film
+WHERE note_moyenne >= 8.0
+  AND nb_note     >  5000
+ORDER BY note_moyenne DESC;
+```
+Le résultat attendu est une liste de films à la fois critiquement
+acclamés et portés par un large public. Ce sous-ensemble pourra servir
+de référence pour tester si la qualité perçue est corrélée aux recettes
+mondiales ou à la décision de visa CNC.
+
+------------------------------------------------------------------------
+
+### Croisements et Comparaisons (Jointures)
+
+#### Requête 9 — Part des revenus étrangers par rapport au total mondial
+
+Calculer, pour chaque film, quelle fraction de ses
+recettes mondiales est réalisée hors marché domestique
+(États-Unis/Canada). Cela permet d'identifier les films à forte
+diffusion internationale.
+On fait une division de `recettes_etranger` par `recettes_mondiales`,
+multipliée par 100. Le filtre `WHERE recettes_mondiales > 0` évite les
+divisions par zéro.
+
+```{sql, connection = con}
+SELECT titre,
+       recette_mondiale,
+       recette_etrangere,
+       ROUND(
+         (recette_etrangere / recette_mondiale) * 100, 2
+       ) AS part_etranger_pct
+FROM film
+WHERE recette_mondiale > 0
+ORDER BY part_etranger_pct DESC;
+```
+Le résultat attendu est un classement des films selon leur degré
+d'internationalisation commerciale. Une forte part étrangère pour des
+films non anglophones pourrait suggérer une corrélation avec l'obtention
+d'un visa en France.
+
+------------------------------------------------------------------------
+
+#### Requête 10 — Films francophones présents dans le top box-office mondial
+
+Identifier les films de langue originale française ayant
+percé sur le marché international, croisés avec leur pays de production.
+On fait une jointure entre `FILM` et `PAYS` via `code_pays`. Le filtre
+porte sur `langue_originale = 'fr'`, et les résultats sont triés par
+recettes mondiales décroissantes.
+
+```{sql, connection = con}
+SELECT f.titre,
+       f.recette_mondiale,
+       f.année_sortie,
+       f.langue_original,
+       p.nom_pays
+FROM FILM f
+LEFT JOIN PAYS p ON f.pays = p.nom_pays
+WHERE f.langue_original = 'fr'
+ORDER BY f.recette_mondiale DESC;
+```
+Le résultat attendu est une liste restreinte de films
+francophones ayant réalisé des recettes significatives à
+l'international. Ces films ont nécessairement un visa CNC, ce qui
+permettra de vérifier si les productions nationales bénéficient de
+conditions d'accès particulières.
+
+------------------------------------------------------------------------
+
+#### Requête 11 — Coproductions internationales et leurs pays de production
+Repérer les films associés à plusieurs pays de production, qui constituent un cas particulier dans notre
+modélisation (valeurs combinées dans `nom_pays`).
+On fait une jointure entre `FILM` et `PAYS`. Le filtre `LIKE '%,%'`
+sur `nom_pays` détecte les entrées correspondant à plusieurs pays
+séparés par une virgule.
+
+```{sql, connection = con}
+SELECT f.titre,
+       f.année_sortie,
+       f.langue_original,
+       p.nom_pays
+FROM FILM f
+LEFT JOIN PAYS p ON f.pays = p.nom_pays
+WHERE p.nom_pays LIKE '%,%'
+ORDER BY f.année_sortie DESC;
+```
+Le résultat attendu est une liste de coproductions multinationales. On
+peut s'attendre à trouver de nombreuses coproductions
+franco-européennes, ce qui soulève la question de leur traitement
+administratif par le CNC.
+
+------------------------------------------------------------------------
+
+#### Requête 12 — Année la plus rentable au box-office mondial
+
+Déterminer quelle année a généré le chiffre d'affaires
+cinématographique mondial cumulé le plus élevé dans notre base de
+données.
+On fait une agrégation `SUM()` des recettes mondiales par
+`annee_sortie`, triée en ordre décroissant.
+
+```{sql, connection = con}
+SELECT année_sortie,
+       SUM(recette_mondiale) AS ca_total_annuel
+FROM film
+GROUP BY année_sortie
+ORDER BY ca_total_annuel DESC;
+```
+
+Les années 2018–2019 ou 2022–2023 devraient
+figurer en tête (avant et après la période Covid). Cette tendance
+permettra de contextualiser les analyses de rentabilité.
+
+------------------------------------------------------------------------
+
+### Requête synthétique
+
+#### Requête 13 — Vue d'ensemble consolidée des données cinématographiques
+
+Produire une vue jointe des trois tables principales
+(`FILM`, `REALISATEUR`, `PAYS`) pour obtenir un aperçu global de la
+base, utile comme point de départ pour les analyses R.
+On effectue une double jointure interne (`JOIN`) sur les clés étrangères
+`id_real` et `code_pays`. Le tri se fait par année de sortie
+décroissante pour visualiser en priorité les films récents.
+
+```{sql, connection = con}
+SELECT f.id_film,
+       f.titre,
+       f.année_sortie,
+       f.langue_original,
+       f.recette_mondiale,
+       r.nom_real  AS nom_realisateur,
+       p.nom_pays  AS pays_production,
+       p.id_pays
+FROM FILM f
+LEFT JOIN REALISATEUR r ON f.réalisateur    = r.nom_real
+LEFT JOIN PAYS        p ON f.pays  = p.nom_pays
+ORDER BY f.année_sortie DESC;
+```
+Le résultat attendu est un tableau synthétique combinant les
+informations économiques, artistiques et géographiques pour chaque film.
+
+------------------------------------------------------------------------
+
+## Analyse de la rentabilité par type de visa
+
+Comprendre si les films classés « Tout public » génèrent
+en moyenne plus de recettes mondiales que les films soumis à des
+restrictions d'âge.
+On fait une agrégation par `decision`, avec comptage et moyenne des
+recettes mondiales. Seules les décisions renseignées sont prises en
+compte (filtre `IS NOT NULL`).
+
+```{sql, connection = con}
+-- Rentabilité moyenne par type de visa CNC
+SELECT décision,
+       COUNT(*)                    AS nombre_films,
+       AVG(recette_mondiale)     AS moyenne_recettes_mondiales
+FROM film
+WHERE décision IS NOT NULL
+GROUP BY décision
+ORDER BY moyenne_recettes_mondiales DESC;
+```
+
+Les films « Tout public » devraient afficher
+les recettes moyennes les plus élevées en raison de leur audience
+maximale. En revanche, certaines catégories comme « Interdit -12 ans »
+pourraient afficher des moyennes compétitives si elles regroupent de
+nombreux blockbusters d'action. Ce résultat constitue un premier élément
+de réponse à notre problématique.
+
+------------------------------------------------------------------------
+
+
+# Matériel et Méthodes
+
+## Logiciels
+
+Les analyses statistiques ont été réalisées sous **R** (version 4.3.x),
+via l'environnement de développement **RStudio**. La rédaction du
+rapport a été effectuée avec **R Markdown**. La connexion à la base de
+données relationnelle (MySQL) a été assurée par les packages `DBI` et
+`RMySQL` (via MAMP).
+
+Les packages R utilisés sont listés ci-dessous :
+
+```{r packages, message=FALSE, warning=FALSE}
+# Chargement des packages nécessaires
+library(DBI)        # Connexion à la base de données MySQL
+library(ggplot2)    # Visualisations
+library(dplyr)      # Manipulation des données
+library(forcats)    # Réordonnancement des facteurs
+library(moments)    # Asymétrie et aplatissement
+library(knitr)      # Mise en forme des tableaux
+```
+
+## Chargement des données
+
+```{r chargement-donnees, message=FALSE, warning=FALSE}
+
+# Indique le dossier où se trouvent tes fichiers CSV
+film        <- read.csv("FILM.csv",        encoding = "UTF-8")
+realisateur <- read.csv("REALISATEUR.csv", encoding = "UTF-8")
+pays        <- read.csv("PAYS.csv",        encoding = "UTF-8")
+
+
+```
+
+
+## Modélisation statistique
+
+Nous mobilisons deux familles de tests statistiques, dont le choix est
+justifié par la nature des variables impliquées.
+
+**Test du** $\chi^2$ d'indépendance — utilisé pour mesurer l'association
+entre deux variables **qualitatives** (nominales ou ordinales). Il
+repose sur l'hypothèse nulle $H_0$ : les deux variables sont
+indépendantes. *Présupposé* : les effectifs théoriques dans chaque case
+du tableau de contingence doivent être $\geq 5$.
+
+**Test ANOVA à un facteur** — utilisé pour comparer les moyennes d'une
+variable **quantitative** entre plusieurs groupes définis par une
+variable **qualitative**. Il repose sur $H_0$ : les moyennes sont égales
+dans tous les groupes. *Présupposés* : (i) normalité des résidus dans
+chaque groupe, (ii) égalité des variances (homoscédasticité), (iii)
+indépendance des observations.
+
+# Analyse Exploratoire des Données
+
+## Résumés numériques univariés
+
+### Variables quantitatives
+
+On commence par un résumé rapide des variables continues les plus
+importantes pour notre problématique.
+
+```{r resume-num, echo = FALSE, message=FALSE, warning=FALSE}
+# Fonctions de dispersion définies en cours
+var.pop    <- function(x) var(x, na.rm=TRUE) * (sum(!is.na(x))-1) / sum(!is.na(x))
+sd.pop     <- function(x) sqrt(var.pop(x))
+coeff.var  <- function(x) sd.pop(x) / mean(x, na.rm=TRUE)
+
+
+vars_quant <- c("recettes_mondiales", "recettes_étrangères","note_moyenne", "nb_notes")
+
+# Sécurité : on ne garde que les colonnes qui existent réellement pour éviter le crash
+vars_existantes <- vars_quant[vars_quant %in% colnames(film)]
+
+# Si aucune colonne n'est trouvée, on affiche un message d'erreur clair
+if(length(vars_existantes) == 0) {
+  stop("Aucune des colonnes spécifiées n'a été trouvée. Vérifiez l'orthographe !")
+}
+
+# 3. Calcul du résumé sur les colonnes qui existent
+resume <- data.frame(
+  Variable   = vars_existantes,
+  Moyenne    = sapply(film[vars_existantes], mean,    na.rm=TRUE),
+  Mediane    = sapply(film[vars_existantes], median,  na.rm=TRUE),
+  EcartType  = sapply(film[vars_existantes], sd.pop)
+)
+
+kable(resume, digits = 2, row.names = FALSE,
+      caption = "Résumés numériques des principales variables quantitatives.")
+```
+
+
+### Variables qualitatives
+
+```{r resume-qual, message=FALSE, warning=FALSE, echo = FALSE}
+
+# Fréquences absolues et relatives
+kable(
+  as.data.frame(table(film$décision)) |>
+    setNames(c("Décision visa", "Effectif")) |>
+    mutate(Fréquence = round(Effectif / sum(Effectif) * 100, 1)),
+  caption = "Répartition des films par décision de visa CNC."
+)
+
+kable(
+  as.data.frame(table(film$format)) |>
+    setNames(c("Format", "Effectif")) |>
+    mutate(Fréquence = round(Effectif / sum(Effectif) * 100, 1)),
+  caption = "Répartition des films par format."
+)
+```
+
+Par la suite, nous nous sommes concentrés sur les variables qualitatives, où l’on peut remarquer que les longs-métrages et les films « Tous publics » sont majoritaires.
+
+
+## Résumés graphiques univariés
+
+### Distribution des recettes mondiales
+
+```{r histo-recettes, message=FALSE,echo = FALSE ,warning=FALSE,fig.cap="Distribution des recettes mondiales (en milliards USD).",fig.align='center', out.width='80%'}
+
+ggplot(film |> filter(!is.na(recettes_mondiales)),
+       aes(x = recettes_mondiales / 1e9)) +
+  geom_histogram(bins = 40, fill = "#5975a4", colour = "white", alpha = 0.85) +
+  geom_vline(aes(xintercept = mean(recettes_mondiales / 1e9, na.rm=TRUE)),
+             colour = "#cc8963", linewidth = 1, linetype = "dashed") +
+  labs(
+    title    = "Distribution des recettes mondiales",
+    subtitle = "La ligne pointillée indique la moyenne",
+    x        = "Recettes mondiales (milliards USD)",
+    y        = "Nombre de films"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+La distribution des recettes mondiales est fortement asymétrique à droite. La majorité des films génèrent des recettes modestes, tandis qu’un nombre restreint de blockbusters concentre les montants les plus élevés. La moyenne est donc supérieure à la médiane.
+
+### Répartition par type de visa (diagramme en barres)
+
+```{r barplot-visa, echo = FALSE ,message=FALSE, warning=FALSE,fig.cap="Répartition des films selon la décision de visa CNC.",fig.align='center', out.width='80%'}
+
+film |>
+  filter(!is.na(décision)) |>
+  count(décision) |>
+  mutate(décision = fct_reorder(décision, n)) |>
+  ggplot(aes(x = décision, y = n, fill = décision)) +
+  geom_col(show.legend = FALSE, alpha = 0.85) +
+  coord_flip() +
+  scale_fill_brewer(palette = "Set2") +
+  labs(
+    title = "Nombre de films par type de visa CNC",
+    x     = NULL,
+    y     = "Nombre de films"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+Les catégories restrictives (-12, -16, -18 ans) sont moins fréquentes, mais constituent un groupe pertinent pour comparer les performances économiques.
+
+## Résumés graphiques bivariés
+
+### Boxplots : recettes mondiales par type de visa
+
+```{r boxplot-recettes-visa1, echo = FALSE,message=FALSE, warning=FALSE,fig.cap="Recettes mondiales selon la décision de visa CNC.",fig.align='center', out.width='85%'}
+
+film |>
+  filter(!is.na(décision), !is.na(recettes_mondiales)) |>
+  mutate(décision = fct_reorder(décision,
+                                recettes_mondiales,
+                                .fun = median, na.rm = TRUE)) |>
+  ggplot(aes(x = décision,
+             y = recettes_mondiales / 1e6,
+             fill = décision)) +
+  geom_boxplot(outlier.alpha = 0.3, show.legend = FALSE) +
+  coord_flip() +
+  scale_fill_brewer(palette = "Pastel1") +
+  labs(
+    title = "Recettes mondiales par type de visa CNC",
+    x     = NULL,
+    y     = "Recettes mondiales (millions USD)"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+Les films classés « Tout public » présentent une médiane de recettes plus élevée que les catégories restrictives. La dispersion reste néanmoins importante, en particulier pour les films à grand succès commercial.
+
+## ANOVA : comparaison des recettes moyennes par type de visa
+
+
+L’ANOVA à un facteur permet de comparer les moyennes d’une variable quantitative (recettes mondiales) entre plusieurs groupes définis par une variable qualitative (type de visa).
+
+$H_0$ : moyennes égales
+$H_1$ : au moins une diffère
+
+### Vérification des présupposés
+
+#### Normalité des résidus (test de la Loi Normale par groupe)
+
+```{r presupposes-normalite, message=FALSE, warning=FALSE, echo = FALSE}
+film_anova <- film |>
+  filter(!is.na(décision), !is.na(recettes_mondiales))
+
+# Test de normalité par groupe (la Loi Normale, nécessite n <= 5000)
+shapiro_resultats <- film_anova |>
+  group_by(décision) |>
+  filter(n() >= 3, n() <= 5000) |>
+  summarise(
+    n        = n(),
+    statW    = shapiro.test(recettes_mondiales)$statistic,
+    p_valeur = shapiro.test(recettes_mondiales)$p.value,
+    .groups  = "drop"
+  )
+
+kable(shapiro_resultats, digits = 4,
+      caption = "Test de la Loi Normale par groupe (H0 : normalité).")
+```
+
+Malgré une normalité imparfaite, la taille de l’échantillon permet d’utiliser l’ANOVA, test généralement robuste dans ce contexte.
+
+
+### Application de l'ANOVA
+
+Le test d' Homogéneité rejette l’égalité stricte des variances (p < 0,001). Une interprétation prudente est donc retenue.
+
+
+```{r anova-table, message=FALSE, warning=FALSE, echo = FALSE}
+library(broom)
+library(knitr)
+
+# Calcul de l'ANOVA
+modele_anova <- aov(recettes_mondiales ~ décision, data = film_anova)
+
+# Transformation en tableau propre
+anova_clean <- tidy(modele_anova)
+
+# Affichage avec kable
+kable(anova_clean, 
+      col.names = c("Terme", "Degrés de liberté", "Somme des carrés", 
+                    "Carré moyen", "Statistique F", "p-value"),
+      digits = 3,
+      caption = "Tableau de l'ANOVA : Influence du Visa sur les Recettes")
+
+```
+
+
+### Calcul du rapport de corrélation $\eta^2$
+
+Le $\eta^2$ (êta carré) mesure la proportion de variance totale des
+recettes expliquée par la décision de visa. Il correspond au rapport
+variance inter / variance totale vu en cours (section 4.2.3).
+
+```{r eta2, message=FALSE, warning=FALSE, echo = FALSE}
+eta2 <- function(x, gpe) {
+  x   <- x[!is.na(x)]
+  gpe <- gpe[!is.na(x)]
+  moyennes  <- tapply(x, gpe, mean)
+  effectifs <- tapply(x, gpe, length)
+  varinter  <- sum(effectifs * (moyennes - mean(x))^2) / length(x)
+  vartot    <- var(x) * (length(x) - 1) / length(x)
+  return(varinter / vartot)
+}
+
+eta2_val <- eta2(film_anova$recettes_mondiales, film_anova$décision)
+cat("Rapport de corrélation eta2 :", round(eta2_val, 4), "\n")
+```
+
+La valeur de $\eta^2$ mesure la part de variance des recettes expliquée par le type de visa. On considère qu'un effet est faible autour de 0,01, modéré à 0,06 et important au-delà de 0,14.
+
+
+
+## Régression linéaire simple : recettes mondiales \~ note moyenne
+
+### Justification
+
+On cherche à modéliser la relation entre la **note moyenne** (prédicteur $x$) et les **recettes mondiales** (variable réponse $Y$), deux
+variables quantitatives continues.
+
+$$Y_i = \beta_0 + \beta_1 x_i + \varepsilon_i, \quad i = 1, \ldots, n$$
+
+avec la présupposée que les
+$\varepsilon_i \overset{iid}{\sim} \mathcal{N}(0, \sigma^2)$.
+
+### Ajustement du modèle
+
+```{r regression, message=FALSE, warning=FALSE, echo = FALSE}
+# 1. Nettoyage des données
+film_reg <- film |>
+  filter(!is.na(note_moyenne), !is.na(recettes_mondiales))
+
+# 2. Création du modèle
+
+modele_reg <- lm(recettes_mondiales ~ note_moyenne, data = film_reg)
+
+# 3. Affichage des résultats
+summary(modele_reg)
+```
+
+Afin d’analyser la relation entre la note moyenne des films et leurs recettes, une régression linéaire a été réalisée après suppression des valeurs manquantes. Le modèle estimé permet d’évaluer dans quelle mesure la note moyenne influence les recettes générées par les films.
+
+
+```{r reg-coef, message=FALSE,echo=FALSE, warning=FALSE}
+# Intervalles de confiance à 95% sur les coefficients
+confint(modele_reg, level = 0.95)
+
+# Coefficient de détermination R²
+cat("R² =", round(summary(modele_reg)$r.squared, 4), "\n")
+cat("R² ajusté =", round(summary(modele_reg)$adj.r.squared, 4), "\n")
+```
+
+Le coefficient estimé indique l’augmentation moyenne des recettes lorsque la note du film progresse d’un point. Le coefficient de détermination ($R^2$) mesure la part des variations des recettes expliquée par la note. Une valeur faible de ce coefficient signifie que d’autres facteurs, comme le budget ou la popularité du film, influencent également les recettes.
+
+
+### Vérification des résidus
+
+```{r residus, message=FALSE,echo=FALSE,warning=FALSE,fig.cap="Diagnostic des résidus du modèle de régression linéaire.",fig.align='center', out.width='80%'}
+
+par(mfrow = c(2, 2))
+plot(modele_reg)
+par(mfrow = c(1, 1))
+```
+
+> **Lecture des graphiques de diagnostic :**
+>
+> -   *Residuals vs Fitted* : les résidus doivent être répartis
+>     aléatoirement autour de 0 (pas de structure). Une courbe indique
+>     une non-linéarité.
+> -   *Q-Q plot* : les points doivent suivre la diagonale pour valider
+>     la normalité des résidus.
+> -   *Scale-Location* : une ligne horizontale valide
+>     l'homoscédasticité.
+> -   *Residuals vs Leverage* : permet d'identifier les points influents
+>     (distance de Cook élevée).
+
+### Droite de régression ajustée
+
+```{r droite-reg, message=FALSE,echo=FALSE, warning=FALSE,fig.cap="Droite de régression linéaire : recettes mondiales en fonction de la note moyenne.",fig.align='center', out.width='85%'}
+
+ggplot(film_reg,
+       aes(x = note_moyenne, y = recettes_mondiales / 1e6)) +
+  geom_point(alpha = 0.3, colour = "#5975a4", size = 1.5) +
+  geom_smooth(method = "lm", se = TRUE,
+              colour = "#cc3333", linewidth = 1) +
+  labs(
+    title    = "Régression : recettes mondiales ~ note moyenne",
+    subtitle = paste0("R² = ", round(summary(modele_reg)$r.squared, 3),
+                      "  |  pente = ",
+                      round(coef(modele_reg)[2] / 1e6, 2),
+                      " M$ par point de note"),
+    x        = "Note moyenne (/ 10)",
+    y        = "Recettes mondiales (millions USD)"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+
+#   Interprétation des Tests
+
+Les analyses statistiques menées dans ce projet permettent d’apporter plusieurs éléments de réponse à la problématique initiale, portant sur les liens entre caractéristiques des films, succès commercial et autorisation d’exploitation en France.
+
+**Influence du type de visa sur les recettes mondiales**
+
+L’analyse de variance (ANOVA) met en évidence une différence statistiquement significative des recettes moyennes selon le type de visa attribué aux films (p < 0,001). Les films classés Tout public présentent globalement des recettes plus élevées que les catégories plus restrictives.
+
+Cependant, la taille d’effet mesurée par le rapport de corrélation  $\eta^2$ = 0,0125 reste faible. Cela signifie que le type de visa n’explique qu’une part limitée des écarts de recettes observés.
+
+Autrement dit, l’accessibilité du film constitue un facteur favorable, mais non suffisant pour expliquer à elle seule le succès commercial.
+
+**Relation entre note moyenne et recettes**
+
+La régression linéaire simple met en évidence une relation positive entre la note moyenne attribuée par les spectateurs et les recettes mondiales.
+
+En moyenne, une hausse d’un point de note est associée à une augmentation estimée des recettes. Toutefois, le coefficient de détermination reste faible ($R^2$ = 0,056), ce qui indique que la note n’explique qu’une faible part de la variabilité des recettes.
+
+Ainsi, la qualité perçue par le public semble jouer un rôle réel, mais modéré.
+
+Réponse globale à la problématique
+
+Les résultats montrent que le succès d’un film dépend d’un ensemble de facteurs combinés :
+
+  accessibilité large du public,
+  appréciation des spectateurs,
+  stratégie marketing,
+  puissance du studio,
+  diffusion internationale,
+  notoriété de la franchise ou des acteurs.
+    
+Aucune variable étudiée ne permet à elle seule d’expliquer pleinement la performance commerciale.
+
+**Limites d’interprétation**
+
+Ces conclusions doivent être nuancées pour plusieurs raisons :
+
+certaines variables majeures (budget publicitaire, casting, réseaux sociaux) sont absentes ;
+la base Kaggle peut contenir des biais de sélection ;
+les recettes présentent une forte asymétrie statistique ;
+l’appariement entre sources peut générer quelques erreurs.
+Les résultats doivent donc être interprétés comme des tendances générales.
+
+
+# Discussion
+
+Le premier obstacle rencontré concerne la taille et la complexité des bases de données utilisées. Les fichiers contenaient un grand nombre de lignes et de variables, ce qui rendait leur exploitation difficile. Pour résoudre ce problème, nous avons dû procéder à un travail de sélection et de tri des variables pertinentes, en supprimant les informations inutiles afin d’obtenir une base plus lisible et exploitable.  
+
+Ensuite, nous avons rencontré plusieurs difficultés lors du pré-traitement et de la fusion des bases de données. En effet, les données provenant de sources différentes n’étaient pas directement compatibles. Il a donc fallu effectuer un matching entre les films (par le titre et parfois l’année), ce qui a pu entraîner certaines imprécisions ou pertes de données. Ce travail a été essentiel pour construire une base de données cohérente permettant l’analyse.  
+
+Par ailleurs, des problèmes sont apparus lors de la gestion des valeurs manquantes. Certaines variables comportaient de nombreuses données absentes, ce qui compliquait leur utilisation dans les analyses statistiques. Nous avons fait le choix de supprimer les observations contenant trop de valeurs manquantes, tout en étant conscients que cela pouvait introduire un biais dans nos résultats en réduisant la taille de l’échantillon.  
+
+Concernant l’utilisation de SQL, nous avons également rencontré des difficultés lors de l’importation et de la structuration des tables. Il a été nécessaire de bien définir les types de variables et d’organiser les relations entre les différentes tables pour pouvoir effectuer des requêtes pertinentes. La création de jointures entre les tables a parfois été complexe, notamment en raison des différences de formats entre les identifiants.  
+
+Dans la phase d’analyse, une autre limite importante réside dans le fait que certaines variables explicatives majeures ne sont pas présentes dans la base, comme le budget des films ou les dépenses marketing. Cela limite la portée de nos conclusions, car ces facteurs jouent un rôle important dans le succès commercial.  
+
+Enfin, même si certaines relations statistiques se révèlent significatives, leur intensité reste faible, ce qui montre que le succès d’un film dépend de nombreux facteurs difficilement observables dans les données. Nos résultats doivent donc être interprétés avec prudence.  
+
+Malgré ces difficultés, ce projet nous a permis de mieux comprendre les enjeux liés à la gestion de bases de données réelles, ainsi que les étapes nécessaires à leur exploitation : nettoyage, structuration, mise en relation et analyse. Il met également en évidence les limites des analyses statistiques lorsqu’elles sont appliquées à des phénomènes complexes comme le succès d’un film.
+
+
+# Conclusion et perspectives {.label:ccl}
+
+En définitive, ce projet mené par l'équipe Ciné Data a permis de dresser un panorama complexe des facteurs de réussite au sein de l'industrie cinématographique. En croisant les données économiques mondiales de Kaggle avec le cadre réglementaire français du CNC, nous avons pu démontrer que le succès d'un film ne repose pas sur une variable unique, mais sur une synergie de facteurs.  
+
+Nos analyses statistiques ont apporté des preuves concrètes à plusieurs hypothèses. D'une part, l'étude des visas d'exploitation confirme que l'accessibilité est un levier commercial majeur : les films classés « Tout public » captent une part de marché nettement plus importante, bien que des exceptions notables (comme certains blockbusters classés « -12 ans ») montrent que le genre et la franchise peuvent compenser les restrictions d'âge. D'autre part, la corrélation établie entre les notes des spectateurs et les recettes mondiales, bien que réelles, reste modérée. Cela souligne que si la qualité d'une œuvre participe à sa longévité, elle reste souvent devancée par la puissance des campagnes marketing et la notoriété des studios de production.  
+
+Sur le plan technique, ce travail a validé l'efficacité de l'approche relationnelle. La structuration des données via un modèle SQL robuste et leur traitement sous RStudio ont permis de transformer une masse de données brutes et hétérogènes en indicateurs stratégiques fiables. Nous avons également mis en évidence des phénomènes intéressants, tels que le biais de sélection des films étrangers sur le marché français, qui affichent des notes supérieures car ils représentent déjà l'élite de leur pays d'origine.  
+
+Toutefois, ce travail ouvre également des perspectives de réflexion. Pour affiner nos modèles de prédiction, il serait pertinent d'intégrer à l'avenir des données plus précises sur les budgets publicitaires et l'influence des réseaux sociaux, qui jouent aujourd'hui un rôle pivot dans la fréquentation en salle. En conclusion, cette étude révèle que dans le cinéma, la réussite est une rencontre subtile entre une liberté d'exploitation administrative, une adhésion du public et une stratégie de diffusion mondiale.
+
+
+# Récapitulatifs des figures {.unnumbered}
+
+```{r, echo=FALSE, fig.align='center', out.width='100%', fig.cap="Modèle Conceptuel de Données"}
+
+library(DiagrammeR)
+
+grViz("
+digraph MCD {
+
+  graph [layout = dot, rankdir = TB]
+
+  node [style = filled]
+
+  # ENTITÉS
+  Film [label = <
+    <b><font point-size='16'>FILM</font></b><br/>
+    <u><b>id_film</b></u><br/>
+    titre<br/>
+    annee_sortie<br/>
+    langue_originale<br/>
+    format<br/>
+    num_visa<br/>
+    decision<br/>
+    localisation_dossier<br/>
+    recettes_mondiales<br/>
+    recettes_domestiques<br/>
+    recettes_etranger<br/>
+    note_moyenne<br/>
+    nb_votes
+  >, shape = box, fillcolor = lightblue]
+
+  Realisateur [label = <
+    <b><font point-size='14'>REALISATEUR</font></b><br/>
+    <u><b>id_real</b></u><br/>
+    nom_real
+  >, shape = box, fillcolor = lightblue]
+
+  Pays [label = <
+    <b><font point-size='14'>PAYS</font></b><br/>
+    <u><b>code_pays</b></u><br/>
+    nom_pays
+  >, shape = box, fillcolor = lightblue]
+
+  # ASSOCIATIONS
+  Realiser [label = <
+    <b><font point-size='13'>REALISER</font></b>
+  >, shape = ellipse, fillcolor = violetred3]
+
+  Produire [label = <
+    <b><font point-size='13'>PRODUIRE</font></b>
+  >, shape = ellipse, fillcolor = violetred3]
+
+  #  POSITIONNEMENT
+  {rank = min; Film}                        
+  {rank = same; Realiser; Produire}          
+  {rank = same; Realisateur; Pays}          
+
+  # RELATIONS
+  Film -> Realiser [label = '1,N']
+  Realiser -> Realisateur [label = '1,N']
+
+  Film -> Produire [label = '1,N']
+  Produire -> Pays [label = '0,N']
+
+}
+")
+
+```
+
+```{r, echo=FALSE, fig.align='center', out.width='30%', fig.cap="ENTITÉ FILM"}
+library(DiagrammeR)
+
+grViz("
+digraph MCD2 {
+
+  graph [layout = dot, rankdir = TB, size = '4,4']
+
+  node [style = filled]
+
+  Film [label = <
+    <b><font point-size='16'>FILM</font></b><br/>
+    <u><b>id_film</b></u><br/>
+    titre<br/>
+    annee_sortie<br/>
+    langue_originale<br/>
+    format<br/>
+    num_visa<br/>
+    decision<br/>
+    localisation_dossier<br/>
+    recettes_mondiales<br/>
+    recettes_domestiques<br/>
+    recettes_etranger<br/>
+    note_moyenne<br/>
+    nb_votes
+  >, shape = box, fillcolor = lightgoldenrodyellow]
+}
+")
+```
+
+```{r, echo=FALSE, fig.align='center', out.width='30%', fig.cap="ENTITÉ RÉALISATEUR"}
+
+library(DiagrammeR)
+
+grViz("
+digraph MCD2 {
+
+  graph [layout = dot, rankdir = TB]
+
+  node [style = filled]
+
+
+  Realisateur [label = <
+    <b><font point-size='16'>REALISATEUR</font></b><br/>
+    <u><b>id_realisateur</b></u><br/>
+    nom
+  >, shape = box, fillcolor = lightgoldenrodyellow]
+
+}
+") 
+
+```
+
+```{r, echo=FALSE, fig.align='center', out.width='30%', fig.cap="ENTITÉ PAYS"}
+
+
+library(DiagrammeR)
+
+grViz("
+digraph MCD2 {
+
+  graph [layout = dot, rankdir = TB]
+  
+  node [style = filled]
+  
+ Pays [label = <
+    <b><font point-size='14'>PAYS</font></b><br/>
+    <u><b>code_pays</b></u><br/>
+    nom_pays
+  >, shape = box, fillcolor = lightgoldenrodyellow]
+
+}
+") 
+
+```
+
+```{r, echo=FALSE, fig.cap="Schéma de la base de données SQL", fig.align='center', out.width='100%'}
+
+knitr::include_graphics("SQL_1.png")
+
+```
+
+```{r, echo=FALSE, fig.cap="Aperçu des Concepteurs", fig.align='center', out.width='100%'}
+
+knitr::include_graphics("SQL_concepteur.png")
+```
+
+::: {#refs}
+:::
+
+\bibliographystyle{elsarticle-harv}
+\bibliography{references}
